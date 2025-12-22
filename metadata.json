@@ -1,0 +1,7 @@
+{
+  "name": "Machikado-bin GPS Log Analyzer",
+  "description": "A sophisticated GPS log management system that detects and analyzes operational stops based on distance, time, and master data constraints.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
