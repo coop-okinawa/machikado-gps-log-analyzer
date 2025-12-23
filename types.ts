@@ -1,58 +1,47 @@
 
-export interface GPSPoint {
-  timestamp: Date;
-  latitude: number;
-  longitude: number;
+export interface Vehicle {
+  id: string;
+  name: string;
+  active: boolean;
+  code4_hash: string;
 }
 
 export interface StopMaster {
   id: string;
   name: string;
-  latitude: number;
-  longitude: number;
-  isBase: boolean; // 拠点かどうかのフラグ
-  description?: string;
+  lat: number;
+  lon: number;
+  type: 'BASE' | 'STOP';
+  radius_m: number;
 }
 
-export type VehicleId = '1号車' | '2号車' | '3号車';
-
-export type VehiclePins = Record<VehicleId, string>;
-
-export interface OperationEvent {
+export interface DetectedStop {
   id: string;
-  vehicleId: VehicleId;
-  type: 'SHIFT_START' | 'SHIFT_END' | 'ARRIVAL' | 'DEPARTURE';
-  locationName: string;
-  timestamp: Date;
-  latitude: number;
-  longitude: number;
+  vehicle_id: string;
+  stop_master_id: string;
+  start_at: string;
+  end_at: string;
+  duration_sec: number;
+  center_lat: number;
+  center_lon: number;
+  // Join fields
+  stop_name?: string;
+  vehicle_name?: string;
 }
 
-export interface DetectedStay {
-  startTime: Date;
-  endTime: Date;
-  durationMinutes: number;
-  latitude: number;
-  longitude: number;
-  matchedMasterName?: string;
+export interface ForecastItem {
+  time: string;
+  temp: number;
+  rainProb: number;
+  forecast: '晴れ' | '曇り' | '雨';
 }
 
-export interface AnalysisResult {
-  totalDistanceKm: number;
-  totalPoints: number;
-  stays: DetectedStay[];
-  confirmedStops: DetectedStay[];
+export interface WeatherData {
+  temp: number;
+  rainProb: number;
+  forecast: string;
+  locationName?: string;
+  upcoming?: ForecastItem[];
 }
 
-export const DEFAULT_MASTERS: StopMaster[] = [
-  { id: '1', name: '中央配送センター', latitude: 35.6812, longitude: 139.7671, isBase: true, description: 'メインハブ' },
-  { id: '2', name: '新宿北ステーション', latitude: 35.6938, longitude: 139.7034, isBase: false, description: '北口近傍店舗' },
-  { id: '3', name: '渋谷南ステーション', latitude: 35.6580, longitude: 139.7016, isBase: false, description: '南口配送所' },
-  { id: '4', name: '銀座サテライト', latitude: 35.6720, longitude: 139.7640, isBase: true, description: '銀座営業所' }
-];
-
-export enum AppView {
-  DRIVER = 'DRIVER',
-  ADMIN_LOGS = 'ADMIN_LOGS',
-  MASTER_DATA = 'MASTER_DATA'
-}
+export type ViewMode = 'driver' | 'admin';

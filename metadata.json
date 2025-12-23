@@ -1,6 +1,7 @@
+
 {
-  "name": "Machikado-bin GPS Log Analyzer",
-  "description": "A sophisticated GPS log management system that detects and analyzes operational stops based on distance, time, and master data constraints.",
+  "name": "まちかど便 運行判定システム",
+  "description": "GPSデータを用いて車両の停留を自動判定し、運行効率を可視化するシステム",
   "requestFramePermissions": [
     "geolocation"
   ]
