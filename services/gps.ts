@@ -1,3 +1,5 @@
+// services/gps.ts
+
 export type GPSPoint = {
   lat: number;
   lng: number;
@@ -5,10 +7,16 @@ export type GPSPoint = {
   timestamp: number;
 };
 
+/**
+ * GPSの監視を開始する
+ * @param onUpdate 位置が更新されたとき
+ * @param onError エラー時（任意）
+ * @returns 停止用の関数（cleanup）
+ */
 export function startGPS(
   onUpdate: (pos: GPSPoint) => void,
   onError?: (err: GeolocationPositionError) => void
-) {
+): (() => void) | null {
   if (!navigator.geolocation) {
     alert("このブラウザはGPSに対応していません");
     return null;
@@ -18,8 +26,9 @@ export function startGPS(
     (position) => {
       const { latitude, longitude, accuracy } = position.coords;
 
-      // 精度が悪すぎる値を除外（ズレ対策）
-      if (accuracy > 50) return;
+      // 🔑 初動を殺さないため緩めにする
+      // 屋外で安定すると 10〜30m になる
+      if (accuracy > 300) return;
 
       onUpdate({
         lat: latitude,
@@ -30,7 +39,7 @@ export function startGPS(
     },
     (error) => {
       console.error("GPS error", error);
-      if (onError) onError(error);
+      onError?.(error);
     },
     {
       enableHighAccuracy: true,
@@ -39,11 +48,8 @@ export function startGPS(
     }
   );
 
-  return watchId;
-}
-
-export function stopGPS(watchId: number | null) {
-  if (watchId !== null) {
+  // 🔑 呼び出し側で確実に止められるようにする
+  return () => {
     navigator.geolocation.clearWatch(watchId);
-  }
+  };
 }
