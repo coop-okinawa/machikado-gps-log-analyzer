@@ -1,8 +1,7 @@
 // App.tsx
-
 import React, { useEffect, useState } from "react";
 import { startGPS, GPSPoint } from "./services/gps";
-import { supabase } from "./lib/supabase";
+import { supabase } from "./src/lib/supabase";
 
 const App: React.FC = () => {
   const [currentPos, setCurrentPos] = useState<GPSPoint | null>(null);
@@ -12,8 +11,8 @@ const App: React.FC = () => {
   useEffect(() => {
     const stop = startGPS(
       async (pos: GPSPoint) => {
-        // 🔍 まずは必ず表示・確認
         setCurrentPos(pos);
+
         console.log(
           "[GPS]",
           pos.lat,
@@ -22,35 +21,28 @@ const App: React.FC = () => {
           pos.accuracy
         );
 
-        /**
-         * 🔑 保存条件（ここだけ）
-         * ・屋外実運用想定：50m以下
-         * ・停留判定は後工程でさらに厳しく
-         */
+        // ✅ 保存条件は「保存時のみ」
         if (pos.accuracy <= 50) {
-          const { error } = await supabase.from("gps_logs").insert({
-            lat: pos.lat,
-            lng: pos.lng,
-            accuracy: pos.accuracy,
-            timestamp: new Date(pos.timestamp).toISOString(),
-          });
+          const { error } = await supabase
+            .from("gps_logs")
+            .insert({
+              lat: pos.lat,
+              lng: pos.lng,
+              accuracy: pos.accuracy,
+              timestamp: new Date(pos.timestamp).toISOString(),
+            });
 
-          if (error) {
-            console.error("Supabase insert error:", error);
-          } else {
+          if (!error) {
             setSavedCount((c) => c + 1);
+          } else {
+            console.error("Supabase error:", error);
           }
         }
       },
-      (err) => {
-        console.error(err);
-        setError("GPS取得エラー");
-      }
+      () => setError("GPS取得エラー")
     );
 
-    return () => {
-      stop?.();
-    };
+    return () => stop?.();
   }, []);
 
   return (
