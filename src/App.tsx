@@ -9,11 +9,10 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const stop = startGPS(
-      async (p: GPSPoint) => {
+      async (p) => {
         setPos(p);
         console.log("[GPS]", p.lat, p.lng, p.accuracy);
 
-        // 保存条件：精度50m以内のみ
         if (p.accuracy <= 50) {
           const { error } = await supabase.from("gps_logs").insert({
             lat: p.lat,
@@ -22,28 +21,21 @@ const App: React.FC = () => {
             timestamp: new Date(p.timestamp).toISOString(),
           });
 
-          if (!error) {
-            setSaved((c) => c + 1);
-          } else {
-            console.error(error);
-          }
+          if (!error) setSaved((c) => c + 1);
+          else console.error(error);
         }
       },
       () => setError("GPS取得エラー")
     );
 
-    return () => {
-      stop?.();
-    };
+    return () => stop?.();
   }, []);
 
   return (
     <div style={{ padding: 16 }}>
       <h2>まちかど便 GPS ログ</h2>
-
       {error && <p style={{ color: "red" }}>{error}</p>}
       {!pos && <p>GPS取得中…</p>}
-
       {pos && (
         <>
           <p>緯度: {pos.lat}</p>
