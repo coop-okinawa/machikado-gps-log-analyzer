@@ -1,19 +1,22 @@
+// src/App.tsx
+
 import React, { useEffect, useState } from "react";
 import { startGPS, GPSPoint } from "../services/gps";
 import { supabase } from "./lib/supabase";
 
 const App: React.FC = () => {
   const [pos, setPos] = useState<GPSPoint | null>(null);
-  const [saved, setSaved] = useState(0);
+  const [savedCount, setSavedCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const stop = startGPS(
-      async (p) => {
+      async (p: GPSPoint) => {
+        // まずは必ず表示（保存とは切り離す）
         setPos(p);
-        console.log("[GPS]", p.lat, p.lng, p.accuracy);
+        console.log("[GPS]", p.lat, p.lng, "accuracy:", p.accuracy);
 
-        // 保存条件：精度50m以内のみ
+        // 保存条件：精度 50m 以内のみ
         if (p.accuracy <= 50) {
           const { error } = await supabase.from("gps_logs").insert({
             lat: p.lat,
@@ -22,14 +25,22 @@ const App: React.FC = () => {
             timestamp: new Date(p.timestamp).toISOString(),
           });
 
-          if (!error) setSaved((c) => c + 1);
-          else console.error(error);
+          if (error) {
+            console.error("Supabase insert error:", error);
+          } else {
+            setSavedCount((c) => c + 1);
+          }
         }
       },
-      () => setError("GPS取得エラー")
+      (err) => {
+        console.error("GPS error:", err);
+        setError("GPS取得エラー");
+      }
     );
 
-    return () => stop?.();
+    return () => {
+      stop?.();
+    };
   }, []);
 
   return (
@@ -37,6 +48,7 @@ const App: React.FC = () => {
       <h2>まちかど便 GPS ログ</h2>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
+
       {!pos && <p>GPS取得中…</p>}
 
       {pos && (
@@ -44,7 +56,7 @@ const App: React.FC = () => {
           <p>緯度: {pos.lat}</p>
           <p>経度: {pos.lng}</p>
           <p>精度: {pos.accuracy} m</p>
-          <p>保存件数: {saved}</p>
+          <p>保存件数: {savedCount}</p>
         </>
       )}
     </div>
