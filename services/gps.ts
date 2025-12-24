@@ -26,8 +26,7 @@ export function startGPS(
     (position) => {
       const { latitude, longitude, accuracy } = position.coords;
 
-      // 🔑 初動を殺さないため緩めにする
-      // 屋外で安定すると 10〜30m になる
+      // 精度が悪すぎるものは除外
       if (accuracy > 300) return;
 
       onUpdate({
@@ -48,7 +47,7 @@ export function startGPS(
     }
   );
 
-  // 🔑 呼び出し側で確実に止められるようにする
+  // cleanup 関数を返す（React設計として正解）
   return () => {
     navigator.geolocation.clearWatch(watchId);
   };
