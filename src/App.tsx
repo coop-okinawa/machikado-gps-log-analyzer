@@ -1,33 +1,29 @@
-// src/App.tsx
 import React, { useEffect, useState } from "react";
 import { startGPS, GPSPoint } from "../services/gps";
 import { supabase } from "./lib/supabase";
 
 const App: React.FC = () => {
-  const [currentPos, setCurrentPos] = useState<GPSPoint | null>(null);
+  const [pos, setPos] = useState<GPSPoint | null>(null);
+  const [saved, setSaved] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [savedCount, setSavedCount] = useState(0);
 
   useEffect(() => {
     const stop = startGPS(
-      async (pos: GPSPoint) => {
-        setCurrentPos(pos);
-        console.log("[GPS]", pos.lat, pos.lng, "accuracy:", pos.accuracy);
+      async (p) => {
+        setPos(p);
+        console.log("[GPS]", p.lat, p.lng, p.accuracy);
 
-        // 保存条件：精度50m以下のみ
-        if (pos.accuracy <= 50) {
+        // 保存条件：精度50m以内のみ
+        if (p.accuracy <= 50) {
           const { error } = await supabase.from("gps_logs").insert({
-            lat: pos.lat,
-            lng: pos.lng,
-            accuracy: pos.accuracy,
-            timestamp: new Date(pos.timestamp).toISOString(),
+            lat: p.lat,
+            lng: p.lng,
+            accuracy: p.accuracy,
+            timestamp: new Date(p.timestamp).toISOString(),
           });
 
-          if (!error) {
-            setSavedCount((c) => c + 1);
-          } else {
-            console.error("Supabase insert error", error);
-          }
+          if (!error) setSaved((c) => c + 1);
+          else console.error(error);
         }
       },
       () => setError("GPS取得エラー")
@@ -41,14 +37,14 @@ const App: React.FC = () => {
       <h2>まちかど便 GPS ログ</h2>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
-      {!currentPos && <p>GPS取得中…</p>}
+      {!pos && <p>GPS取得中…</p>}
 
-      {currentPos && (
+      {pos && (
         <>
-          <p>緯度: {currentPos.lat}</p>
-          <p>経度: {currentPos.lng}</p>
-          <p>精度: {currentPos.accuracy} m</p>
-          <p>保存件数: {savedCount}</p>
+          <p>緯度: {pos.lat}</p>
+          <p>経度: {pos.lng}</p>
+          <p>精度: {pos.accuracy} m</p>
+          <p>保存件数: {saved}</p>
         </>
       )}
     </div>
