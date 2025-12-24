@@ -8,10 +8,9 @@ export type GPSPoint = {
 };
 
 /**
- * GPSの監視を開始する
- * @param onUpdate 位置が更新されたとき
- * @param onError エラー時（任意）
- * @returns 停止用の関数（cleanup）
+ * GPS監視を開始
+ * - 取得は無条件
+ * - 精度判断は呼び出し側で行う
  */
 export function startGPS(
   onUpdate: (pos: GPSPoint) => void,
@@ -26,9 +25,6 @@ export function startGPS(
     (position) => {
       const { latitude, longitude, accuracy } = position.coords;
 
-      // 精度が悪すぎるものは除外
-      if (accuracy > 300) return;
-
       onUpdate({
         lat: latitude,
         lng: longitude,
@@ -37,17 +33,17 @@ export function startGPS(
       });
     },
     (error) => {
-      console.error("GPS error", error);
+      console.error("GPS error:", error);
       onError?.(error);
     },
     {
-      enableHighAccuracy: true,
+      enableHighAccuracy: true, // ← 必須
       timeout: 20000,
       maximumAge: 0,
     }
   );
 
-  // cleanup 関数を返す（React設計として正解）
+  // cleanup
   return () => {
     navigator.geolocation.clearWatch(watchId);
   };
